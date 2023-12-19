@@ -1,13 +1,17 @@
-name: CI
-
+name: Build webapp and deploy to Github Pages
 on:
   push:
     branches: [ "main" ]
+    paths:
+        - assets/**
+        - lib/**
+        - web/**
 
   workflow_dispatch:
 
 jobs:
   build_and_deploy:
+    name: Build webapp and deploy
     runs-on: ubuntu-latest
     steps:
     - name: "Checkout repo"
