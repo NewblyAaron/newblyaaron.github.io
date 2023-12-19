@@ -1,164 +1,137 @@
-import 'package:flutter/material.dart';
-import 'package:newbly_flutter_website/abstracts.dart';
-import 'package:newbly_flutter_website/screens/home/pages/about_page.dart';
-import 'package:newbly_flutter_website/screens/home/pages/contact_page.dart';
-import 'package:newbly_flutter_website/screens/home/pages/home_page.dart';
+import 'dart:math';
 
-class HomeScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  Widget build(BuildContext context) => _HomeScreenView(this);
-
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  final pageKey = GlobalKey();
-  final pages = const [HomePage(), AboutPage(), ContactPage()];
-  final pageController = PageController(keepPage: true);
-
-  int selectedIndex = 0;
-
-  void setSelectedDestination(int value) {
-    setState(() => selectedIndex = value);
-    pageController.animateToPage(selectedIndex,
-        duration: const Duration(milliseconds: 300), curve: Curves.ease);
-  }
-
-  void openDrawer() {
-    scaffoldKey.currentState!.openDrawer();
-  }
-}
-
-class _HomeScreenView extends WidgetView<HomeScreen, _HomeScreenState> {
-  const _HomeScreenView(super.state);
-
-  @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (builderContext, constraints) {
-        if (constraints.maxWidth > 800) {
-          return buildTabletScaffold();
-        } else {
-          return buildMobileScaffold(builderContext);
-        }
-      },
-    );
-  }
-
-  Scaffold buildMobileScaffold(BuildContext context) {
     return Scaffold(
-      key: state.scaffoldKey,
-      body: Column(
-        children: [
-          buildPageView(),
-          BottomAppBar(
-            elevation: 8,
-            height: 64,
-            child: Row(
-              children: [
-                IconButton(
-                    onPressed: () => buildModalBottomNav(context),
-                    icon: const Icon(Icons.menu_rounded))
-              ],
-            ),
-          )
+      body: CustomScrollView(
+        slivers: [
+          buildHeader(context),
+          SliverList(
+              delegate: SliverChildBuilderDelegate(
+                  (context, index) => Container(
+                        color: getRandomColor(),
+                        height: 150,
+                      ),
+                  childCount: 20))
         ],
       ),
     );
   }
 
-  Scaffold buildTabletScaffold() {
-    return Scaffold(
-      key: state.scaffoldKey,
-      body: Row(
-        children: [buildNavRail(), buildPageView()],
-      ),
+  Widget buildHeader(BuildContext context) {
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: MediaQuery.of(context).size.height,
+      flexibleSpace: buildHeaderSpace(),
     );
   }
 
-  Widget buildNavRail() {
-    const destinations = [
-      NavigationRailDestination(
-          icon: Icon(Icons.home_rounded), label: Text("Home")),
-      NavigationRailDestination(
-          icon: Icon(Icons.person_rounded), label: Text("About")),
-      NavigationRailDestination(
-          icon: Icon(Icons.contact_support_rounded), label: Text("Contact")),
-    ];
-
+  LayoutBuilder buildHeaderSpace() {
     return LayoutBuilder(
-      builder: (context, constraints) => NavigationRail(
-        elevation: 8,
-        groupAlignment: constraints.maxWidth > 800 ? 0 : 0.82,
-        extended: constraints.maxWidth > 800 ? false : true,
-        labelType: constraints.maxWidth > 800
-            ? NavigationRailLabelType.selected
-            : NavigationRailLabelType.none,
-        destinations: destinations,
-        selectedIndex: state.selectedIndex,
-        onDestinationSelected: state.setSelectedDestination,
-      ),
-    );
-  }
+      builder: (context, constraints) {
+        var top = constraints.biggest.height;
 
-  Future<dynamic> buildModalBottomNav(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.only(top: 24.0),
-          child: StatefulBuilder(builder: (context, setState) {
-            final destinations = [
-              ListTile(
-                title: const Text("Home"),
-                leading: const Icon(Icons.home_rounded),
-                selected: state.selectedIndex == 0,
-                onTap: () {
-                  state.setSelectedDestination(0);
-                  setState(() {});
-                },
-              ),
-              ListTile(
-                title: const Text("About"),
-                leading: const Icon(Icons.person_rounded),
-                selected: state.selectedIndex == 1,
-                onTap: () {
-                  state.setSelectedDestination(1);
-                  setState(() {});
-                },
-              ),
-              ListTile(
-                title: const Text("Contact"),
-                leading: const Icon(Icons.contact_support_rounded),
-                selected: state.selectedIndex == 2,
-                onTap: () {
-                  state.setSelectedDestination(2);
-                  setState(() {});
-                },
-              ),
-            ];
+        bool isCollapsed() =>
+            top == MediaQuery.of(context).padding.top + kToolbarHeight;
 
-            return ListView(
-              children: destinations,
-            );
-          }),
+        bool mobileWidth() => constraints.maxWidth < 1000;
+
+        return FlexibleSpaceBar(
+          title: isCollapsed()
+              ? const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          backgroundImage:
+                              AssetImage("assets/images/profile_picture.jpg"),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : null,
+          titlePadding: EdgeInsets.zero,
+          centerTitle: true,
+          background: Container(
+            color: Theme.of(context).primaryColor,
+            child: Stack(children: [
+              Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.only(),
+                child: mobileWidth()
+                    ? const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 100,
+                            backgroundImage:
+                                AssetImage("assets/images/profile_picture.jpg"),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "Aaron M. Serrano",
+                            style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFAE296)),
+                          ),
+                          Text(
+                            "BS Information Technology",
+                            style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.normal,
+                                color: Color(0xFFFAE296)),
+                          ),
+                        ],
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 200,
+                            backgroundImage:
+                                AssetImage("assets/images/profile_picture.jpg"),
+                          ),
+                          SizedBox(width: 32),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Aaron M. Serrano",
+                                style: TextStyle(
+                                    fontSize: 64,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFFAE296)),
+                              ),
+                              Text(
+                                "BS Information Technology",
+                                style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.normal,
+                                    color: Color(0xFFFAE296)),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+              )
+            ]),
+          ),
         );
       },
     );
   }
 
-  Expanded buildPageView() {
-    return Expanded(
-        child: PageView(
-      key: state.pageKey,
-      physics: const NeverScrollableScrollPhysics(),
-      scrollDirection: Axis.vertical,
-      controller: state.pageController,
-      children: state.pages,
-    ));
-  }
+  getRandomColor() =>
+      Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
 }
